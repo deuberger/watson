@@ -1,1 +1,6 @@
 .workshop.lock
+watson/.env
+watson/output/
+watson/.venv/
+watson/__pycache__/
+watson/**/__pycache__/

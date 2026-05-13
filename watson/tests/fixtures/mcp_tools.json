@@ -1,0 +1,16 @@
+{
+  "tools": [
+    {
+      "name": "searchJiraIssuesUsingJql",
+      "description": "Search Jira issues using JQL"
+    },
+    {
+      "name": "getJiraIssue",
+      "description": "Get a Jira issue by key"
+    },
+    {
+      "name": "getJiraIssueComments",
+      "description": "Get comments for a Jira issue"
+    }
+  ]
+}

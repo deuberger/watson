@@ -1,0 +1,11 @@
+{
+  "jira": {
+    "command": "npx",
+    "args": [
+      "-y", "mcp-remote",
+      "https://mcp.atlassian.com/v1/mcp",
+      "--header", "Authorization:Bearer ${ATLASSIAN_API_TOKEN}"
+    ],
+    "env": {}
+  }
+}
