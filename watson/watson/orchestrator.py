@@ -2,7 +2,7 @@
 import asyncio
 import logging
 
-from watson.mcp_client import jira_mcp_session, list_tools, load_server_config, search_issues
+from watson.mcp_client import jira_mcp_session, list_tools, load_server_config, search_issues, build_jql, _find_search_tool
 from watson.agent import run_triage_agent
 from watson.output import print_summary, write_report
 
@@ -26,16 +26,25 @@ async def triage_issues(
             # Resolve issue keys from filters if none provided explicitly
             keys = list(issue_keys)
             if not keys and project:
+                jql = build_jql(project, components, priorities)
+                tool_name = _find_search_tool(tools) or "searchJiraIssuesUsingJql"
                 print(f"🔍  Searching Jira ({project}) with filters…")
-                keys = await search_issues(
+                print(f"    Tool : {tool_name}")
+                print(f"    JQL  : {jql}")
+                keys, raw = await search_issues(
                     session,
                     project=project,
                     components=components,
                     priorities=priorities,
                     max_results=max_results,
+                    available_tools=tools,
                 )
                 if not keys:
                     print("ℹ️   No issues matched the filters.")
+                    print("\n── Raw MCP response ──────────────────────────────")
+                    print(raw or "(empty response)")
+                    print("──────────────────────────────────────────────────")
+                    print("\nTip: run `watson tools` to see available tool names.")
                     return
                 print(f"    Found {len(keys)} issue(s): {', '.join(keys)}\n")
 

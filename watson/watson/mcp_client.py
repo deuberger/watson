@@ -1,11 +1,14 @@
 """MCP client – connects to the Atlassian Rovo MCP server via mcp-remote."""
 import json
+import logging
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+
+log = logging.getLogger(__name__)
 
 
 def _resolve_env(value: str) -> str:
@@ -78,9 +81,21 @@ def build_jql(
         clauses.append(f"component in ({clist})")
 
     clauses.append("statusCategory != Done")
-    clauses.append('issuetype in ("Story", "Improvement", "New Feature", "Task")')
 
     return " AND ".join(clauses) + " ORDER BY priority ASC, created DESC"
+
+
+def _find_search_tool(tools: list[dict]) -> str | None:
+    """Return the name of the JQL/search tool from the available MCP tools."""
+    for candidate in ("searchJiraIssuesUsingJql", "search_jira_issues", "jira_search",
+                      "searchIssues", "search_issues"):
+        if any(t["name"] == candidate for t in tools):
+            return candidate
+    # Fall back: first tool whose name contains "search" (case-insensitive)
+    for t in tools:
+        if "search" in t["name"].lower():
+            return t["name"]
+    return None
 
 
 async def search_issues(
@@ -89,20 +104,28 @@ async def search_issues(
     components: list[str],
     priorities: list[str],
     max_results: int = 10,
-) -> list[str]:
-    """Search Jira via MCP and return a list of matching issue keys."""
+    available_tools: list[dict] | None = None,
+) -> tuple[list[str], str]:
+    """Search Jira via MCP and return (issue_keys, raw_response)."""
     import re
 
+    tool_name = _find_search_tool(available_tools or []) or "searchJiraIssuesUsingJql"
     jql = build_jql(project, components, priorities)
-    result = await call_tool(session, "searchJiraIssuesUsingJql", {
+
+    log.debug("Search tool: %s", tool_name)
+    log.debug("JQL: %s", jql)
+
+    result = await call_tool(session, tool_name, {
         "jql": jql,
         "maxResults": max_results,
     })
+
+    log.debug("Raw MCP search response:\n%s", result)
 
     # Parse issue keys from the returned text (e.g. "PROJ-123", "PROJ-456")
     keys = re.findall(r"\b[A-Z][A-Z0-9]+-\d+\b", result)
     # Deduplicate while preserving order
     seen: set[str] = set()
     unique = [k for k in keys if not (k in seen or seen.add(k))]  # type: ignore[func-returns-value]
-    return unique[:max_results]
+    return unique[:max_results], result
 

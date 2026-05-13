@@ -14,7 +14,7 @@ TOOLS_DATA = load_json("mcp_tools.json")["tools"]
 @pytest.mark.asyncio
 async def test_search_issues_returns_keys():
     session = make_mock_session(MCP_RESPONSES, TOOLS_DATA)
-    keys = await search_issues(
+    keys, raw = await search_issues(
         session,
         project="PROJ",
         components=["Reporting"],
@@ -23,12 +23,13 @@ async def test_search_issues_returns_keys():
     )
     assert "PROJ-101" in keys
     assert "PROJ-102" in keys
+    assert raw  # raw response should be non-empty
 
 
 @pytest.mark.asyncio
 async def test_search_issues_respects_max_results():
     session = make_mock_session(MCP_RESPONSES, TOOLS_DATA)
-    keys = await search_issues(
+    keys, _ = await search_issues(
         session,
         project="PROJ",
         components=[],
@@ -41,10 +42,11 @@ async def test_search_issues_respects_max_results():
 @pytest.mark.asyncio
 async def test_search_issues_empty_response():
     session = make_mock_session({}, TOOLS_DATA)
-    keys = await search_issues(
+    keys, raw = await search_issues(
         session,
         project="PROJ",
         components=["NonExistentComponent"],
         priorities=["High"],
     )
     assert keys == []
+    assert raw == ""

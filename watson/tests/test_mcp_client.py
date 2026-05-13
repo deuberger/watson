@@ -34,6 +34,7 @@ class TestBuildJql:
         assert 'component in ("Auth")' in jql
         assert "ORDER BY priority ASC" in jql
 
-    def test_issue_type_filter_included(self):
+    def test_issue_type_filter_not_present(self):
+        """issuetype filter was removed to avoid excluding valid issue types."""
         jql = build_jql("PROJ", [], [])
-        assert "issuetype in" in jql
+        assert "issuetype" not in jql

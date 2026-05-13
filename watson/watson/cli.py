@@ -7,12 +7,9 @@ _PRIORITIES = ["Highest", "High", "Medium", "Low", "Lowest"]
 
 
 @click.group()
-@click.option("--debug", is_flag=True, help="Enable debug logging.")
-def cli(debug: bool) -> None:
+def cli() -> None:
     """Watson – product feedback triage assistant."""
     load_dotenv()
-    level = logging.DEBUG if debug else logging.WARNING
-    logging.basicConfig(level=level, format="%(levelname)s %(name)s: %(message)s")
 
 
 @cli.command()
@@ -27,7 +24,7 @@ def cli(debug: bool) -> None:
     "--priority", "-p",
     multiple=True,
     type=click.Choice(_PRIORITIES, case_sensitive=False),
-    help="Filter by priority. Repeatable. Defaults to High+Highest when filtering.",
+    help="Filter by priority. Repeatable.",
 )
 @click.option(
     "--project", "-j",
@@ -42,12 +39,17 @@ def cli(debug: bool) -> None:
     show_default=True,
     help="Maximum issues to triage when using filters.",
 )
+@click.option(
+    "--debug", is_flag=True,
+    help="Print JQL, raw MCP responses, and LLM tool calls.",
+)
 def triage(
     issue_keys: tuple[str, ...],
     component: tuple[str, ...],
     priority: tuple[str, ...],
     project: str | None,
     max_results: int,
+    debug: bool,
 ) -> None:
     """Triage Jira issues and produce Markdown reports.
 
@@ -58,9 +60,16 @@ def triage(
     Examples:
       watson triage PROJ-123 PROJ-456
       watson triage --project PROJ --priority High --priority Highest
-      watson triage --project PROJ --component "Auth" --priority High
+      watson triage --project PROJ --component "Auth" --priority High --debug
     """
     from watson.orchestrator import run
+
+    level = logging.DEBUG if debug else logging.WARNING
+    logging.basicConfig(
+        level=level,
+        format="%(levelname)s %(name)s: %(message)s",
+        force=True,
+    )
 
     if not issue_keys and not (component or priority):
         raise click.UsageError(
@@ -72,16 +81,33 @@ def triage(
             "--project is required when using --component or --priority filters."
         )
 
-    # Default priorities when only component is given
-    effective_priorities = list(priority) or (["High", "Highest"] if component else [])
-
     run(
         issue_keys=list(issue_keys),
         components=list(component),
-        priorities=effective_priorities,
+        priorities=list(priority),
         project=project,
         max_results=max_results,
     )
+
+
+@cli.command("tools")
+def list_tools_cmd() -> None:
+    """List all MCP tools available from the configured servers."""
+    import asyncio
+    from watson.mcp_client import load_server_config, jira_mcp_session, list_tools
+
+    async def _run():
+        config = load_server_config()
+        async with jira_mcp_session(config) as session:
+            tools = await list_tools(session)
+            print(f"\n{len(tools)} tools available:\n")
+            for t in tools:
+                print(f"  {t['name']}")
+                if t.get("description"):
+                    print(f"    {t['description'][:80]}")
+            print()
+
+    asyncio.run(_run())
 
 
 def main() -> None:
