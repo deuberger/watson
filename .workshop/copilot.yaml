@@ -1,0 +1,14 @@
+# workshop.yaml
+name: copilot
+base: ubuntu@24.04
+sdks:
+  - name: copilot
+    channel: latest/stable
+
+actions:
+  copilot-auto: |
+    copilot --model $COPILOT_MODEL --yolo --silent --prompt "$@"
+
+  copilot: |
+    copilot --model $COPILOT_MODEL --yolo --interactive "$@"
+

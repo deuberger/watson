@@ -1,0 +1,63 @@
+# Watson – Shared Objectives
+
+## Purpose
+Watson is a proof-of-concept sidekick for triaging product improvement requests
+sourced from Jira. It helps product and engineering teams cut through the noise
+on high-priority issues by pulling in relevant context from across the
+organization's ecosystem, then synthesizing that context into actionable
+triage output.
+
+## Target Scope (PoC)
+Focus exclusively on high-priority Jira issues tagged or classified as product
+improvement requests / feature suggestions. Lower-priority issues are out of
+scope for the initial proof of concept.
+
+## Context Sources
+Watson will gather supporting context from the following systems:
+
+- **Jira** – The primary source of truth for the improvement request itself
+  (title, description, comments, linked issues, priority, reporter, labels).
+- **Mattermost** – Relevant channel discussions or threads that mention the
+  issue, feature area, or affected customers.
+- **Google Docs** – Product specs, design docs, or meeting notes related to
+  the feature area or request.
+- **GitHub** – Related pull requests, issues, commits, or repository context
+  (e.g. code complexity, recent churn in the affected area).
+
+## Triage Output Goals
+For each high-priority improvement request Watson should produce:
+
+1. **Summary** – A concise, human-readable description of what is being asked
+   and why, synthesized from all available context sources.
+2. **Scope** – A clear articulation of what work is implied by the request
+   (breadth, affected systems/components, dependencies).
+3. **Fit with Project Goals** – An evaluation of how well the request aligns
+   with current product strategy and roadmap priorities.
+4. **Effort Estimate** – A rough estimate of implementation effort based on
+   available signals (scope, GitHub churn, similar past work, etc.).
+
+## Key Principles
+- **Synthesis over aggregation** – Don't just dump raw data; distill it into
+  insight a product manager or engineer can act on immediately.
+- **Traceability** – Every claim in the triage output should be traceable to a
+  source (Jira comment, Mattermost thread, doc, or commit).
+- **High-priority focus** – Quality over quantity; do fewer issues but do them
+  well enough to demonstrate real value.
+- **Extensibility** – The context-gathering and synthesis pipeline should be
+  easy to extend with new sources or new output dimensions later.
+
+## Out of Scope (for PoC)
+- Low or medium priority issues.
+- Automated updates or writes back to Jira.
+- Real-time / streaming ingestion.
+- A polished end-user UI (structured output or a simple view is sufficient).
+- Multi-tenant or production deployment.
+
+## Open Questions to Resolve During Exploration
+- Which Jira fields and issue types define a "product improvement request"?
+- How are high-priority issues identified (priority field, label, epic, etc.)?
+- Which Mattermost channels and Google Drive folders are in scope?
+- What GitHub repositories and branches are relevant?
+- How should "fit with project goals" be defined and measured?
+- What granularity of effort estimate is useful (t-shirt sizes, story points)?
+- What does a good triage output look like to the target audience?

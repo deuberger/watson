@@ -1,0 +1,11 @@
+# workshop.yaml
+name: claude-code
+base: ubuntu@24.04
+sdks:
+  - name: claude-code
+    channel: latest/stable
+
+actions:
+  claude-yolo: claude --dangerously-skip-permissions "$@"
+
+  claude-yolo-prompt: claude --dangerously-skip-permissions -p "$@"
